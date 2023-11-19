@@ -275,3 +275,24 @@ p2_df =
   mutate(week = as.numeric(week)) |> 
   select(arm, ID, week, observation)
 ```
+
+making spaghetti plot !
+
+``` r
+p2_df |> 
+  ggplot(aes(x = week, y = observation, color = ID)) +
+  geom_line() +
+  facet_wrap(~arm) +
+  labs(x = "week", y = "observations", title = "observations of subjects over time")
+```
+
+<img src="hw5_files/figure-gfm/unnamed-chunk-7-1.png" width="90%" />
+
+In the control arm, participants had no marked increase or decrease in
+observation values. the control arm observation values mainly stayed
+between -1.25 and 3.75. However in the experimental arm, there was
+(generally) an increase in values over the course of the study period (8
+weeks). in week 0, the range of values was around -1.25 to 3.75 and but
+week 8, the valyes fell within 2.5 to 7.5.
+
+## problem 3

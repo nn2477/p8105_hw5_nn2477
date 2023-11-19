@@ -109,22 +109,22 @@ There is a wide range in which the rates of homicides are solved. Chicago appear
 names_df =
   tibble(
     files = list.files("data/"),
-    path = str_c("data/", files)) |> 
-  mutate(data = map(path, read_csv)) |> 
+    path = str_c("data/", files)) %>% 
+  mutate(data = map(path, read_csv)) %>% 
   unnest()
 
 p2_df =
-  names_df |> 
+  names_df %>% 
   mutate(
     files = str_replace(files, ".csv", ""),
     arm = str_sub(files, 1, 3),
-    ID = str_sub(files, 5, 7)) |> 
+    ID = str_sub(files, 5, 7)) %>% 
   pivot_longer(
     week_1:week_8,
     names_to = "week",
     values_to = "observation",
-    names_prefix = "week_") |> 
-  mutate(week = as.numeric(week)) |> 
+    names_prefix = "week_") %>% 
+  mutate(week = as.numeric(week)) %>% 
   select(arm, ID, week, observation)
 ```
 making spaghetti plot ! 
@@ -148,10 +148,10 @@ sim_mean = function(mu) {
   data = tibble(
     x = rnorm(n=30, mean = mu, sd = 5),
   )
-output = data |>
-  t.test() |>
-  broom::tidy() |>
-  select(estimate, p.value) |>
+output = data %>% 
+  t.test() %>% 
+  broom::tidy() %>% 
+  select(estimate, p.value) %>% 
   rename(mu_hat=estimate, pval=p.value)
 }
 ```
@@ -161,18 +161,18 @@ repeating for mu = 1, 2, 3, 4, 5, 6
 sim_results = expand_grid(
   mu_df = c(0, 1, 2, 3, 4, 5, 6),
   iter = 1:5000
-) |>
+) %>% 
   mutate(
     estimate = map(mu_df, sim_mean)
-  ) |>
+  ) %>% 
   unnest(estimate)
 ```
 
 number of times null was rejected & true value of mu on plot
 
 ```{r}
-sim_results |>
-  group_by(mu_df) |> 
+sim_results %>% 
+  group_by(mu_df) %>% 
   summarise(
     reject = sum(pval < 0.05),
     proport = reject/5000) |> 
@@ -182,4 +182,32 @@ sim_results |>
   labs(x = "true value of μ", y = "power", title = "power of test vs true value of μ")
 ```
 
+the plot displays a curve of test power that increases between mu (true value of 0) and ~4 until it reaches a plateau. based on this plot, we can allude that as effect size increases, the power of the test also increases.
 
+plot for avg estimate of mu_hat & true value of mu
+
+```{r}
+sim_results %>% 
+  group_by(mu_df) %>% 
+  mutate(mu_hat_avg = mean(mu_hat)) %>% 
+  ggplot(aes(x = mu_df, y = mu_hat_avg)) +
+  geom_point() +
+  geom_line() +
+  labs(x = "true value of μ", y = "avg estimate of μ_hat", title = "avg estimate of μ_hat vstrue value of μ")
+```
+
+
+plot of avg estimate of mu_hat for samples where null was rejected and true value of mu
+
+```{r}
+sim_results %>% 
+  group_by(mu_df) %>%  
+  filter(pval<0.05) %>% 
+  mutate(mu_hat_avg = mean(mu_hat)) %>% 
+  ggplot(aes(x = mu_df, y = mu_hat_avg)) +
+  geom_point() +
+  geom_line() +
+  labs(x = "true value of μ", y = "avg estimate of μ_hat", title = "avg estimate of μ_hat where null was rejected vs true value of μ")
+```
+
+in the samples where the null was rejected, the sample avg of mu_hat is not approximately equal to the true value of mu. based on the second plot (samples where null was rejected), we observed that the sampl avg of mu_hat is equal to the true value of mu for values 0, 4, 5, and 6. However, when the true value of mu is 1, 2, or 3, the avg estimate of mu_hat is not equal to the true value. this may be due to a smaller effect size (i.e. lower test power), which can influence the accuracy of the avg estimate of mu_hat

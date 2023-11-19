@@ -296,3 +296,47 @@ weeks). in week 0, the range of values was around -1.25 to 3.75 and but
 week 8, the valyes fell within 2.5 to 7.5.
 
 ## problem 3
+
+setting elements & generating datasets
+
+``` r
+sim_mean = function(mu) {
+  data = tibble(
+    x = rnorm(n=30, mean = mu, sd = 5),
+  )
+output = data |>
+  t.test() |>
+  broom::tidy() |>
+  select(estimate, p.value) |>
+  rename(mu_hat=estimate, pval=p.value)
+}
+```
+
+repeating for mu = 1, 2, 3, 4, 5, 6
+
+``` r
+sim_results = expand_grid(
+  mu_df = c(0, 1, 2, 3, 4, 5, 6),
+  iter = 1:5000
+) |>
+  mutate(
+    estimate = map(mu_df, sim_mean)
+  ) |>
+  unnest(estimate)
+```
+
+number of times null was rejected & true value of mu on plot
+
+``` r
+sim_results |>
+  group_by(mu_df) |> 
+  summarise(
+    reject = sum(pval < 0.05),
+    proport = reject/5000) |> 
+  ggplot(aes(x = mu_df, y = proport)) +
+  geom_point() +
+  geom_line() +
+  labs(x = "true value of μ", y = "power", title = "power of test vs true value of μ")
+```
+
+<img src="hw5_files/figure-gfm/unnamed-chunk-10-1.png" width="90%" />

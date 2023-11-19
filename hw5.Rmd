@@ -11,6 +11,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(p8105.datasets)
 library(viridis)
+library(broom)
 library(purrr)
 library(rvest)
 
@@ -137,7 +138,8 @@ p2_df |>
   labs(x = "week", y = "observations", title = "observations of subjects over time")
 ```
 
-In the control arm, participants had no marked increase or decrease in observation values. the control arm observation values mainly stayed between -1.25 and 3.75. However in the experimental arm, there was (generally) an increase in values over the course of the study period (8 weeks). in week 0, the range of values was around -1.25 to 3.75 and but week 8, the valyes fell within 2.5 to 7.5. 
+In the control arm, participants had no marked increase or decrease in observation values. the control arm observation values mainly stayed between -1.25 and 3.75. However in the experimental arm, there was (generally) an increase in values over the course of the study period (8 weeks). in week 0, the range of values was around -1.25 to 3.75 and but week 8, the values fell within 2.5 to 7.5. 
+
 
 ## problem 3
 
@@ -146,27 +148,28 @@ setting elements & generating datasets
 ```{r}
 sim_mean = function(mu) {
   data = tibble(
-    x = rnorm(n=30, mean = mu, sd = 5),
+    x = rnorm(n = 30, mean = mu, sd = 5),
   )
+  
 output = data %>% 
   t.test() %>% 
   broom::tidy() %>% 
   select(estimate, p.value) %>% 
-  rename(mu_hat=estimate, pval=p.value)
+  rename(mu_hat = estimate, pval = p.value)
 }
-```
 
-repeating for mu = 1, 2, 3, 4, 5, 6
-```{r}
-sim_results = expand_grid(
+##repeating for mu = 1, 2, 3, 4, 5, 6
+
+sim_results <- expand_grid(
   mu_df = c(0, 1, 2, 3, 4, 5, 6),
   iter = 1:5000
-) %>% 
+) %>%
   mutate(
     estimate = map(mu_df, sim_mean)
-  ) %>% 
+  ) %>%
   unnest(estimate)
 ```
+
 
 number of times null was rejected & true value of mu on plot
 
@@ -195,7 +198,6 @@ sim_results %>%
   geom_line() +
   labs(x = "true value of μ", y = "avg estimate of μ_hat", title = "avg estimate of μ_hat vstrue value of μ")
 ```
-
 
 plot of avg estimate of mu_hat for samples where null was rejected and true value of mu
 
